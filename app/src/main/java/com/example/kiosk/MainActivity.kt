@@ -288,6 +288,7 @@ fun purchase(){
             if(toBuyList.isEmpty()){
                 if(invalidInputCnt==5) {
                     println("상품 번호가 올바르지 않습니다. 입력오류 5회로 구매가 취소되었습니다.")
+                    goingToBuy=false
                     break
                 }
                 println("상품 번호가 올바르지 않습니다. 다시 시도해주세요. (입력오류(${invalidInputCnt} / 5)")
