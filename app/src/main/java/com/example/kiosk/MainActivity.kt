@@ -7,7 +7,7 @@ var sumBucket = 0 // 장바구니 합계
 fun main(){
     //메인 메뉴판 화면(대분류)
     val titleArray = arrayOf("콜드 브루", "브루드 커피", "에스프레소", "주스(병음료)")
-    println("<메뉴판(대분류)>")
+    println("<메뉴판>")
     println("1. 전체 보기")
     for(i in titleArray.indices){
         println("${i+2}. ${titleArray[i]}")
@@ -59,7 +59,8 @@ fun main(){
 
     var selectNum: Int?=null
     while (true) {
-        println("세부 매뉴를 확인할 대분류 번호(1~5)를 입력한 뒤 엔터를 누르세요. 0 입력 시 종료:")
+        println()
+        println("세부 정보를 확인할 메뉴의 번호(1~5)를 입력한 뒤 엔터를 누르세요. 0 입력 시 종료:")
         val tmpNum = readln()
         try{
             selectNum=tmpNum.toInt()
@@ -199,6 +200,7 @@ fun printBucketList() {
         }
         println("총 합계: $sumBucket 원")
     }
+    println("(내 잔액: $currentUserMoney 원)")
 }
 
 //장바구니 담기 함수
@@ -206,11 +208,11 @@ fun saveToWishList(title:String, items: List<StarbucksMenuItem>) {
     var menuNum: Int?
 
     while (true) {
-        print("장바구니에 담으실 음료(1~${items.size})를 선택해주세요. (")
+        print("장바구니에 담으실 음료(1~${items.size})를 선택해주세요. (메뉴로 돌아가기: 0")
         if(bucketList.isNotEmpty()){
-            print("구매하러 가기: -1, ")
+            print(", 구매하러 가기: -1, 장바구니 확인: -2")
         }
-        println("메뉴로 돌아가기: 0)")
+        println(")")
         menuNum = readln().toIntOrNull()
 
         //메뉴선택 입력 예외처리
@@ -228,6 +230,11 @@ fun saveToWishList(title:String, items: List<StarbucksMenuItem>) {
             purchase()
             break
         }
+        //장바구니 확인
+        else if(menuNum==-2){
+            printBucketList()
+            continue
+        }
 
         //장바구니 담기
         else if (menuNum in 1..items.size) {
@@ -236,7 +243,7 @@ fun saveToWishList(title:String, items: List<StarbucksMenuItem>) {
             sumBucket += selectedItem.price()
 
             println("${selectedItem.name}을/를 장바구니에 추가했습니다.")
-            printBucketList()
+            //printBucketList()
         }
     }
 }
@@ -272,11 +279,11 @@ fun purchase(){
                 //올바른 입력(while문 종료)
                 println("아래와 같이 구매를 진행하시려면 1, 취소하시려면 else input을 입력해주세요.")
                 var sumTmp = 0
-                val itemCounts = toBuyList.groupingBy { it }.eachCount() //각 요소의 중복 나타나는 횟수
+                //val itemCounts = toBuyList.groupingBy { it }.eachCount() //각 요소의 중복 나타나는 횟수
                 toBuyList.forEachIndexed { idx, it ->
-                    val count = itemCounts[it] ?: 0 // 해당 항목의 중복 횟수를 가져오거나, 없으면 0
-                    println("${idx + 1}. ${bucketList[it - 1].name} (x $count) : ${bucketList[it - 1].price() * count}원")
-                    sumTmp += (bucketList[it - 1].price() * count)
+                    //val count = itemCounts[it] ?: 0 // 해당 항목의 중복 횟수를 가져오거나, 없으면 0
+                    println("${idx + 1}. ${bucketList[it - 1].name} : ${bucketList[it - 1].price()}원")
+                    sumTmp += bucketList[it - 1].price()
                 }
                 println("총 구매하실 금액: $sumTmp 원")
 
@@ -315,7 +322,7 @@ fun purchase(){
             else if(buyOption) bucketList.clear()
 
             sumBucket-=sumToBuy
-            printBucketList()
+            //printBucketList()
         }
     }
 }
