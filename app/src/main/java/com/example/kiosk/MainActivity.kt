@@ -1,10 +1,12 @@
 package com.example.kiosk
 
+import kotlinx.coroutines.*
+
 var currentUserMoney = 0 // 현재 사용자의 금액(글로벌 변수)
 var bucketList = mutableListOf<StarbucksMenuItem>() // 장바구니
 var sumBucket = 0 // 장바구니 합계
 
-fun main(){
+fun main()=runBlocking{
     //메인 메뉴판 화면(대분류)
     val titleArray = arrayOf("콜드 브루", "브루드 커피", "에스프레소", "주스(병음료)")
     println("<메뉴판>")
@@ -59,7 +61,6 @@ fun main(){
 
     var selectNum: Int?=null
     while (true) {
-        println()
         println("세부 정보를 확인할 메뉴의 번호(1~5)를 입력한 뒤 엔터를 누르세요. 0 입력 시 종료:")
         val tmpNum = readln()
         try{
@@ -90,13 +91,12 @@ fun main(){
                 printMenuItems(titleArray[3], beverage)
             }
             0 -> {
-                println("종료되었습니다.")
+                println("----------------------------------")
                 break
             }
             else -> println("1~5의 숫자를 입력해주세요.")
         }
     }
-
 
     //lv4 장바구니 담기 및 구매
     var money:Int? = null
@@ -111,6 +111,7 @@ fun main(){
     }
     println("현재 잔액: ${money}원")
     currentUserMoney=money
+    println("----------------------------------")
 
     //구매를 원하는 메뉴판 번호 입력받기
     var selNum:Int?=null
@@ -140,33 +141,34 @@ fun main(){
                     if(readln()=="1")continue
                 }
                 else{
+                    delay(500) //0.5초 지연
+                    println("//////////////////////////////////")
                     println("장바구니가 비었습니다. 구매하실 상품을 선택해주세요.")
+                    println("//////////////////////////////////")
                     continue
                 }
             }
             println("종료되었습니다.")
+            println("<END>.")
             break
         }
         else if(selNum==-2) {
+            delay(500) //0.5초 지연
             printBucketList()
             continue
         }
 
         when(selNum){
             1-> {
-                printMenuPrices("콜드 브루", coldBrew)
                 saveToWishList("콜드 브루", coldBrew)
             }
             2-> {
-                printMenuPrices("브루드 커피", dripCoffee)
                 saveToWishList("브루드 커피", dripCoffee)
             }
             3-> {
-                printMenuPrices("에스프레소", espresso)
                 saveToWishList("에스프레소", espresso)
             }
             4-> {
-                printMenuPrices("주스(병음료)", beverage)
                 saveToWishList("주스(병음료)", beverage)
             }
             else->{
@@ -196,7 +198,8 @@ fun printMenuPrices(title:String, items: List<StarbucksMenuItem>){
 }
 
 // 장바구니 출력 함수
-fun printBucketList() {
+suspend fun printBucketList() {
+    println("//////////////////////////////////")
     if (bucketList.isEmpty()) {
         println("장바구니가 비었습니다.")
     } else {
@@ -207,18 +210,17 @@ fun printBucketList() {
         println("총 합계: $sumBucket 원")
     }
     println("(내 잔액: $currentUserMoney 원)")
+    println("//////////////////////////////////")
 }
 
 //장바구니 담기 함수
-fun saveToWishList(title:String, items: List<StarbucksMenuItem>) {
+suspend fun saveToWishList(title:String, items: List<StarbucksMenuItem>) {
     var menuNum: Int?
 
     while (true) {
+        println("[장바구니 담기]")
+        printMenuPrices(title, items)
         println("장바구니에 담으실 음료(1~${items.size})를 선택해주세요. (메뉴로 돌아가기: 0, 구매하러 가기: -1, 장바구니 확인: -2)")
-//        if(bucketList.isNotEmpty()){
-//            print(", 구매하러 가기: -1")
-//        }
-//        println(", 장바구니 확인: -2)")
         menuNum = readln().toIntOrNull()
 
         //메뉴선택 입력 예외처리
@@ -229,21 +231,27 @@ fun saveToWishList(title:String, items: List<StarbucksMenuItem>) {
         //종료
         else if (menuNum == 0) {
             println("장바구니 담기가 종료되었습니다. 메뉴로 돌아갑니다.")
+            println("----------------------------------")
             break
         }
         //바로 구매
         else if(menuNum==-1){
             if(bucketList.isNotEmpty()){
+                println("----------------------------------")
                 purchase()
                 break
             }
             else{
+                delay(500) //0.5초 지연
+                println("//////////////////////////////////")
                 println("장바구니가 비었습니다. 구매하실 상품을 선택해주세요.")
+                println("//////////////////////////////////")
                 continue
             }
         }
         //장바구니 확인
         else if(menuNum==-2){
+            delay(500) //0.5초 지연
             printBucketList()
             continue
         }
@@ -255,23 +263,31 @@ fun saveToWishList(title:String, items: List<StarbucksMenuItem>) {
             sumBucket += selectedItem.price()
 
             println("${selectedItem.name}을/를 장바구니에 추가했습니다.")
+            println("----------------------------------")
             //printBucketList()
+        }
+        else{
+            println("1~${items.size}의 수를 입력해주세요.")
         }
     }
 }
 
-fun purchase(){
+suspend fun purchase(){
+    println("[구매하기]")
     //현재 장바구니 리스트 출력
     printBucketList()
+
     //전체 or 선택 상품 구매
     var sumToBuy = 0
     var toBuyList: List<Int> = emptyList()
     var goingToBuy = true
     var buyOption = true //전체구매:true, 선택구매:false
 
-    println("전체 구매를 원하시면 1을, 구매하실 상품들을 선택하시려면 else input을 입력해주세요.")
+    println("전체 상품을 바로 구매하시려면 1을, 구매하실 상품들을 선택하시려면 else input을 입력해주세요.")
     if(readln()=="1"){
         sumToBuy= sumBucket
+        println("결제 진행 중...")
+        delay(3000) //3초 지연
     }
 
     else{
@@ -287,7 +303,8 @@ fun purchase(){
                 .sorted()
             if(toBuyList.isEmpty()){
                 if(invalidInputCnt==5) {
-                    println("상품 번호가 올바르지 않습니다. 입력오류 5회로 구매가 취소되었습니다.")
+                    println("상품 번호가 올바르지 않습니다. 입력 오류 5회로 구매가 취소되었습니다.")
+                    println("----------------------------------")
                     goingToBuy=false
                     break
                 }
@@ -307,9 +324,11 @@ fun purchase(){
 
                 if(readln()=="1"){
                     println("결제 진행 중...")
+                    delay(3000) //3초 지연
                     sumToBuy=sumTmp
                 }else{
                     println("구매가 취소되었습니다.")
+                    println("----------------------------------")
                     goingToBuy=false
                 }
                 break
@@ -322,14 +341,18 @@ fun purchase(){
             println("구매 합계(${sumToBuy})가 현재 잔액(${currentUserMoney})을 초과합니다. 구매하실 목록을 수정하시려면 1, 취소하시려면 else input을 입력해주세요.")
             if(readln()=="1")
                 purchase()
-            else
-                println("종료되었습니다.")
+            else{
+                println("구매가 취소되었습니다.")
+                println("----------------------------------")
+            }
         }
+
         else{
             println("최종 구매가 완료되었습니다.")
             println("최종 구매 합계: $sumToBuy 원")
             currentUserMoney-=sumToBuy
             println("현재 남은 잔액: $currentUserMoney 원")
+            println("----------------------------------")
 
             //장바구니 수정
             if(!buyOption && toBuyList.isNotEmpty()) {
