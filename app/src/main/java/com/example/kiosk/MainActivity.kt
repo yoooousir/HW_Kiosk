@@ -118,9 +118,9 @@ fun main(){
     while(true){
         println("[메뉴]")
         println("<1. 콜드 브루>, <2. 브루드 커피>, <3. 에스프레소>, <4. 주스(병음료)>")
-        print("구매하고 싶으신 음료가 있는 메뉴의 번호(1~4)를 입력해주세요. (종료: 0")
-        if(bucketList.isNotEmpty())print(", 바로 구매: -1, 장바구니 확인: -2")
-        println(")")
+        println("구매하고 싶으신 음료가 있는 메뉴의 번호(1~4)를 입력해주세요. (종료: 0, 바로 구매: -1, 장바구니 확인: -2)")
+//        if(bucketList.isNotEmpty())print(", 바로 구매: -1")
+//        println(", 장바구니 확인: -2)")
 
         //정수입력 예외처리
         val tmpNum = readln()
@@ -133,10 +133,16 @@ fun main(){
         //결과적으로 종료되는(종료될 수 있는) 상황
         if(selNum==-1 || selNum==0){
             if (selNum==-1){
-                //구매결정
-                purchase()
-                println("계속 구매하시겠습니까? (Yes: 1, No: else input)")
-                if(readln()=="1")continue
+                if(bucketList.isNotEmpty()){
+                    //구매결정
+                    purchase()
+                    println("계속 구매하시겠습니까? (Yes: 1, No: else input)")
+                    if(readln()=="1")continue
+                }
+                else{
+                    println("장바구니가 비었습니다. 구매하실 상품을 선택해주세요.")
+                    continue
+                }
             }
             println("종료되었습니다.")
             break
@@ -192,7 +198,7 @@ fun printMenuPrices(title:String, items: List<StarbucksMenuItem>){
 // 장바구니 출력 함수
 fun printBucketList() {
     if (bucketList.isEmpty()) {
-        println("장바구니가 비어 있습니다.")
+        println("장바구니가 비었습니다.")
     } else {
         println("<장바구니 목록>")
         bucketList.forEachIndexed { index, item ->
@@ -208,11 +214,11 @@ fun saveToWishList(title:String, items: List<StarbucksMenuItem>) {
     var menuNum: Int?
 
     while (true) {
-        print("장바구니에 담으실 음료(1~${items.size})를 선택해주세요. (메뉴로 돌아가기: 0")
-        if(bucketList.isNotEmpty()){
-            print(", 구매하러 가기: -1, 장바구니 확인: -2")
-        }
-        println(")")
+        println("장바구니에 담으실 음료(1~${items.size})를 선택해주세요. (메뉴로 돌아가기: 0, 구매하러 가기: -1, 장바구니 확인: -2)")
+//        if(bucketList.isNotEmpty()){
+//            print(", 구매하러 가기: -1")
+//        }
+//        println(", 장바구니 확인: -2)")
         menuNum = readln().toIntOrNull()
 
         //메뉴선택 입력 예외처리
@@ -227,8 +233,14 @@ fun saveToWishList(title:String, items: List<StarbucksMenuItem>) {
         }
         //바로 구매
         else if(menuNum==-1){
-            purchase()
-            break
+            if(bucketList.isNotEmpty()){
+                purchase()
+                break
+            }
+            else{
+                println("장바구니가 비었습니다. 구매하실 상품을 선택해주세요.")
+                continue
+            }
         }
         //장바구니 확인
         else if(menuNum==-2){
@@ -265,7 +277,8 @@ fun purchase(){
     else{
         buyOption=false
         //구매할 목록 입력(올바르게 입력할 때까지 반복)
-        while(true){
+        var invalidInputCnt=0
+        while(invalidInputCnt++<5){
             println("구매하실 상품 번호들을 공백을 사이에 두고 입력해주세요 (1~${bucketList.size}).")
             val userInput = readln()
             toBuyList = userInput.split(' ')
@@ -273,7 +286,11 @@ fun purchase(){
                 .filter { it in 1..bucketList.size } // 유효한 범위 내의 번호만 선택, 중복 입력은 수량 증가로 처리
                 .sorted()
             if(toBuyList.isEmpty()){
-                println("상품 번호가 올바르지 않습니다. 다시 시도해주세요.")
+                if(invalidInputCnt==5) {
+                    println("상품 번호가 올바르지 않습니다. 입력오류 5회로 구매가 취소되었습니다.")
+                    break
+                }
+                println("상품 번호가 올바르지 않습니다. 다시 시도해주세요. (입력오류(${invalidInputCnt} / 5)")
             }
             else{
                 //올바른 입력(while문 종료)
