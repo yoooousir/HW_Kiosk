@@ -6,7 +6,7 @@ var currentUserMoney = 0 // 현재 사용자의 금액(글로벌 변수)
 var bucketList = mutableListOf<StarbucksMenuItem>() // 장바구니
 var sumBucket = 0 // 장바구니 합계
 
-fun main()=runBlocking{
+suspend fun main(){
     //메인 메뉴판 화면(대분류)
     val titleArray = arrayOf("콜드 브루", "브루드 커피", "에스프레소", "주스(병음료)")
     println("<메뉴판>")
@@ -24,8 +24,8 @@ fun main()=runBlocking{
     }
     val dripCoffee = ArrayList<DripCoffee>().apply {
         addAll(listOf(
-            DripCoffee.coffee,
-            DripCoffee.iceCoffee
+            DripCoffee.createCoffee(),
+            DripCoffee.createIceCoffee()
         ))
     }
 
@@ -56,8 +56,8 @@ fun main()=runBlocking{
         addAll(beverage)
     }
 
-        //대분류 메뉴에 해당하는 숫자를 입력하면 세부 메뉴들을 보여줌
-        //0 입력 시 종료
+    //대분류 메뉴에 해당하는 숫자를 입력하면 세부 메뉴들을 보여줌
+    //0 입력 시 종료
 
     var selectNum: Int?=null
     while (true) {
@@ -98,7 +98,6 @@ fun main()=runBlocking{
         }
     }
 
-    //lv4 장바구니 담기 및 구매
     var money:Int? = null
     println("현재 소지하고 계신 금액을 입력해주세요. (숫자만 입력)")
     while (money == null) {
@@ -113,67 +112,72 @@ fun main()=runBlocking{
     currentUserMoney=money
     println("----------------------------------")
 
-    //구매를 원하는 메뉴판 번호 입력받기
-    var selNum:Int?=null
-    var priceSum=0
-    while(true){
-        println("[메뉴]")
-        println("<1. 콜드 브루>, <2. 브루드 커피>, <3. 에스프레소>, <4. 주스(병음료)>")
-        println("구매하고 싶으신 음료가 있는 메뉴의 번호(1~4)를 입력해주세요. (종료: 0, 바로 구매: -1, 장바구니 확인: -2)")
+    coroutineScope{
+        //lv4 장바구니 담기 및 구매
+        launch {
+            //구매를 원하는 메뉴판 번호 입력받기
+            var selNum:Int?=null
+            var priceSum=0
+            while(true){
+                println("[메뉴]")
+                println("<1. 콜드 브루>, <2. 브루드 커피>, <3. 에스프레소>, <4. 주스(병음료)>")
+                println("구매하고 싶으신 음료가 있는 메뉴의 번호(1~4)를 입력해주세요. (종료: 0, 바로 구매: -1, 장바구니 확인: -2)")
 //        if(bucketList.isNotEmpty())print(", 바로 구매: -1")
 //        println(", 장바구니 확인: -2)")
 
-        //정수입력 예외처리
-        val tmpNum = readln()
-        try{
-            selNum = tmpNum.toInt()
-        }catch(e: NumberFormatException){
-            println("정수가 아닌 입력입니다. 다시 시도해주세요.")
-        }
-
-        //결과적으로 종료되는(종료될 수 있는) 상황
-        if(selNum==-1 || selNum==0){
-            if (selNum==-1){
-                if(bucketList.isNotEmpty()){
-                    //구매결정
-                    purchase()
-                    println("계속 구매하시겠습니까? (Yes: 1, No: else input)")
-                    if(readln()=="1")continue
+                //정수입력 예외처리
+                val tmpNum = readln()
+                try{
+                    selNum = tmpNum.toInt()
+                }catch(e: NumberFormatException){
+                    println("정수가 아닌 입력입니다. 다시 시도해주세요.")
                 }
-                else{
+
+                //결과적으로 종료되는(종료될 수 있는) 상황
+                if(selNum==-1 || selNum==0){
+                    if (selNum==-1){
+                        if(bucketList.isNotEmpty()){
+                            //구매결정
+                            purchase()
+                            println("계속 구매하시겠습니까? (Yes: 1, No: else input)")
+                            if(readln()=="1")continue
+                        }
+                        else{
+                            delay(500) //0.5초 지연
+                            println("//////////////////////////////////")
+                            println("장바구니가 비었습니다. 구매하실 상품을 선택해주세요.")
+                            println("//////////////////////////////////")
+                            continue
+                        }
+                    }
+                    println("종료되었습니다.")
+                    println("<END>.")
+                    break
+                }
+                else if(selNum==-2) {
                     delay(500) //0.5초 지연
-                    println("//////////////////////////////////")
-                    println("장바구니가 비었습니다. 구매하실 상품을 선택해주세요.")
-                    println("//////////////////////////////////")
+                    printBucketList()
                     continue
                 }
-            }
-            println("종료되었습니다.")
-            println("<END>.")
-            break
-        }
-        else if(selNum==-2) {
-            delay(500) //0.5초 지연
-            printBucketList()
-            continue
-        }
 
-        when(selNum){
-            1-> {
-                saveToWishList("콜드 브루", coldBrew)
-            }
-            2-> {
-                saveToWishList("브루드 커피", dripCoffee)
-            }
-            3-> {
-                saveToWishList("에스프레소", espresso)
-            }
-            4-> {
-                saveToWishList("주스(병음료)", beverage)
-            }
-            else->{
-                println("잘못된 입력입니다.")
-                continue
+                when(selNum){
+                    1-> {
+                        saveToWishList("콜드 브루", coldBrew)
+                    }
+                    2-> {
+                        saveToWishList("브루드 커피", dripCoffee)
+                    }
+                    3-> {
+                        saveToWishList("에스프레소", espresso)
+                    }
+                    4-> {
+                        saveToWishList("주스(병음료)", beverage)
+                    }
+                    else->{
+                        println("잘못된 입력입니다.")
+                        continue
+                    }
+                }
             }
         }
     }

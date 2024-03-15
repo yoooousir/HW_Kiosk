@@ -7,7 +7,7 @@ open class StarbucksMenuItem(val name:String, val calories:String, val price:Str
     fun calories():Int{
         return calories.filter { it.isDigit() }.toInt()
     }
-    fun printName():String{
+    open fun printName():String{
         return name
     }
     fun purchasable(): Boolean = currentUserMoney >= price()
